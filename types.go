@@ -2,50 +2,18 @@ package conntrack
 
 import (
 	"errors"
-	"log"
 	"net"
-	"time"
-
-	"github.com/mdlayher/netlink"
-	"github.com/mdlayher/netlink/nlenc"
-	"golang.org/x/sys/unix"
+	//"fmt"
+	"thirdparty/github.com/mdlayher/netlink"
+	"thirdparty/github.com/mdlayher/netlink/nlenc"
+	"thirdparty/golang.org/x/sys/unix"
+	"encoding/binary"
 )
-
-// Config contains options for a Conn.
-type Config struct {
-	// Network namespace the Nflog needs to operate in. If set to 0 (default),
-	// no network namespace will be entered.
-	NetNS int
-
-	// Time till a read action times out - only available for Go >= 1.12
-	ReadTimeout time.Duration
-
-	// Time till a write action times out - only available for Go >= 1.12
-	WriteTimeout time.Duration
-
-	// Interface to log internals.
-	Logger *log.Logger
-}
 
 // Nfct represents a conntrack handler
 type Nfct struct {
 	// Con is the pure representation of a netlink socket
 	Con *netlink.Conn
-
-	logger *log.Logger
-
-	setReadTimeout  func() error
-	setWriteTimeout func() error
-}
-
-// adjust the ReadTimeout (mostly for testing)
-func adjustReadTimeout(nfct *Nfct, fn func() error) {
-	nfct.setReadTimeout = fn
-}
-
-// adjust the WriteTimeout (mostly for testing)
-func adjustWriteTimeout(nfct *Nfct, fn func() error) {
-	nfct.setWriteTimeout = fn
 }
 
 // Conn contains all the information of a connection
@@ -245,6 +213,63 @@ func (c Conn) OrigDstIP() (net.IP, error) {
 		return ip, nil
 	}
 	return nil, ErrConnNoSrcIP
+}
+
+
+func (c Conn) OrigSrcPort() (uint16, error) {
+	if data, ok := c[AttrOrigPortSrc]; ok {
+		port := binary.BigEndian.Uint16(data)
+		return port, nil
+	}
+	return 0,nil
+}
+func (c Conn) OrigDstPort() (uint16, error) {
+	if data, ok := c[AttrOrigPortDst]; ok {
+		port := binary.BigEndian.Uint16(data)
+		return port, nil
+	}
+	return 0,nil
+}
+
+// OrigSrcIP returns the net.IP representation of the source IP
+func (c Conn) OrigRspSrcIP() (net.IP, error) {
+	if data, ok := c[AttrReplIPv6Src]; ok {
+		ip := net.IP(data)
+		return ip, nil
+	} else if data, ok := c[AttrReplIPv4Src]; ok {
+		ip := net.IPv4(data[0], data[1], data[2], data[3])
+		return ip, nil
+	}
+	return nil, ErrConnNoSrcIP
+}
+
+// OrigDstIP returns the net.IP representation of the destination IP
+func (c Conn) OrigRspDstIP() (net.IP, error) {
+	if data, ok := c[AttrReplIPv6Dst]; ok {
+		ip := net.IP(data)
+		return ip, nil
+	} else if data, ok := c[AttrReplIPv4Dst]; ok {
+		ip := net.IPv4(data[0], data[1], data[2], data[3])
+		return ip, nil
+	}
+	return nil, ErrConnNoSrcIP
+}
+
+
+func (c Conn) OrigRspSrcPort() (uint16, error) {
+	if data, ok := c[AttrReplPortSrc]; ok {
+		port := binary.BigEndian.Uint16(data)
+		return port, nil
+	}
+	return 0,nil
+}
+
+func (c Conn) OrigRspDstPort() (uint16, error) {
+	if data, ok := c[AttrReplPortDst]; ok {
+		port := binary.BigEndian.Uint16(data)
+		return port, nil
+	}
+	return 0,nil
 }
 
 // Uint8 returns the uint8 representation of the given attribute's data.
