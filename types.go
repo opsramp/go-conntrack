@@ -9,6 +9,7 @@ import (
 	"github.com/mdlayher/netlink"
 	"github.com/mdlayher/netlink/nlenc"
 	"golang.org/x/sys/unix"
+	"encoding/binary"
 )
 
 // Config contains options for a Conn.
