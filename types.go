@@ -3,10 +3,9 @@ package conntrack
 import (
 	"errors"
 	"net"
-	//"fmt"
-	"thirdparty/github.com/mdlayher/netlink"
-	"thirdparty/github.com/mdlayher/netlink/nlenc"
-	"thirdparty/golang.org/x/sys/unix"
+	"github.com/mdlayher/netlink"
+	"github.com/mdlayher/netlink/nlenc"
+	"golang.org/x/sys/unix"
 	"encoding/binary"
 )
 
